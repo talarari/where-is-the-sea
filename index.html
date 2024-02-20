@@ -34,12 +34,22 @@
         p {
             margin: 5px 0;
         }
+
+        #arrow {
+            width: 100px;
+            height: 100px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="blue" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21L3 12l18-9v7l-15 3 15 3z"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            transition: transform 0.5s ease;
+        }
     </style>
 </head>
 <body>
     <div id="app">
         <h1>Where is the Sea?</h1>
         <p>Point your phone towards where you think the sea is.</p>
+        <div id="arrow"></div>
         <p id="timer">30</p>
         <button id="start">Start Challenge</button>
     </div>
@@ -50,7 +60,7 @@
         });
 
         function startOrientationListener() {
-            let timer = 30; // 30 seconds countdown
+            let timer = 10; // 10 seconds countdown
             document.getElementById('timer').textContent = timer;
             let finalAlpha = null; // To store the final orientation
 
@@ -61,14 +71,15 @@
                 } else {
                     clearInterval(interval);
                     checkIfCorrect(finalAlpha);
+                    document.getElementById('start').disabled = false; // Re-enable start button
                 }
             }, 1000);
 
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientation', (event) => {
-                    finalAlpha = event.alpha; // Update finalAlpha with the current orientation
-                }, { once: true }); // Listen once to get an initial direction
-            }
+            window.addEventListener('deviceorientation', (event) => {
+                const alpha = event.alpha;
+                finalAlpha = alpha;
+                document.getElementById('arrow').style.transform = `rotate(${alpha}deg)`;
+            });
         }
 
         function checkIfCorrect(alpha) {
@@ -78,7 +89,6 @@
             } else {
                 alert('Try again! Remember, the sea is to the west.');
             }
-            document.getElementById('start').disabled = false; // Re-enable start button
         }
 
         function determineWestDirection(alpha) {
