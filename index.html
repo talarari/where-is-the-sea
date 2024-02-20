@@ -3,33 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Where is the Sea</title>
+    <title>Where is the Sea?</title>
     <style>
         body, html {
             margin: 0;
             padding: 0;
-            height: 100%;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
             font-family: Arial, sans-serif;
+            height: 100vh;
             background-color: #f0f8ff;
         }
 
-        #sea-graphic {
+        .sea-graphic {
             width: 100%;
             height: 150px;
-            background-color: #0077be;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><path fill="%230079C1" d="M0 0h800v600H0z"/><path fill="%23fff" fill-opacity=".5" d="M0 0h800v600H0z"/><path fill="%2300487E" d="M0 100s300 100 400 0 400 100 400 100V0H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 100s300 100 400 0 400 100 400 100V0H0z"/><path fill="%2300487E" d="M0 200s300 100 400 0 400 100 400 100v-100H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 200s300 100 400 0 400 100 400 100v-100H0z"/><path fill="%2300487E" d="M0 300s300 100 400 0 400 100 400 100V200H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 300s300 100 400 0 400 100 400 100V200H0z"/><path fill="%2300487E" d="M0 400s300 100 400 0 400 100 400 100V300H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 400s300 100 400 0 400 100 400 100V300H0z"/><path fill="%2300487E" d="M0 500s300 100 400 0 400 100 400 100V400H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 500s300 100 400 0 400 100 400 100V400H0z"/></svg>');
-            background-repeat: no-repeat;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="100%" height="100%" fill="%230077be"/><text x="50%" y="50%" font-family="Arial" font-size="24" fill="white" text-anchor="middle" alignment-baseline="central">The Sea</text></svg>') no-repeat center center;
             background-size: cover;
+            margin-bottom: 20px;
         }
 
         #app {
-            max-width: 90%;
-            margin-top: 20px;
+            text-align: center;
         }
 
         button {
@@ -40,34 +37,43 @@
             color: white;
             border: none;
             border-radius: 5px;
-            margin-top: 20px;
         }
 
         #arrow {
-            width: 100px;
-            height: 100px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6M5 12l7-7 7 7"/></svg>');
-            background-size: contain;
-            background-repeat: no-repeat;
-            margin: 20px auto;
+            width: 0; 
+            height: 0; 
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 40px solid black;
+            margin: 20px;
+        }
+
+        #timer, #direction {
+            font-size: 20px;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <div id="sea-graphic"></div>
+    <div class="sea-graphic"></div>
     <div id="app">
         <h1>Where is the Sea?</h1>
         <p>Point your phone towards where you think the sea is.</p>
         <div id="arrow"></div>
-        <p id="timer">30</p>
+        <p id="timer">10</p>
         <button id="start">Start Challenge</button>
+        <p id="direction"></p>
     </div>
     <script>
         document.getElementById('start').addEventListener('click', function() {
             this.disabled = true; // Disable start button after challenge begins
-            let timer = 30; // 30 seconds countdown
+            startOrientationListener();
+        });
+
+        function startOrientationListener() {
+            let timer = 10; // 10 seconds countdown
             document.getElementById('timer').textContent = timer;
-            let finalAlpha = null;
+            let finalAlpha = null; // To store the final orientation
 
             const interval = setInterval(() => {
                 if (timer > 0) {
@@ -76,26 +82,23 @@
                 } else {
                     clearInterval(interval);
                     checkIfCorrect(finalAlpha);
-                    this.disabled = false; // Re-enable start button
                 }
             }, 1000);
 
-            // Simulate capturing the device's direction
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientation', (event) => {
-                    finalAlpha = event.alpha;
-                }, { once: true }); // Capture initial direction
-            }
-        });
-
-        function checkIfCorrect(alpha) {
-            // This is where you would check the orientation
-            // For demonstration, we assume the user is always correct
-            alert('Challenge completed! See if you pointed correctly.');
+            window.addEventListener('deviceorientation', (event) => {
+                finalAlpha = event.alpha;
+            }, { once: true }); // Capture the orientation once when the button is clicked
         }
 
-        // Assuming west is 270 degrees (with a margin from 260 to 280)
+        function checkIfCorrect(alpha) {
+            const westDirection = determineWestDirection(alpha);
+            const message = westDirection ? 'Congratulations! You were pointing towards the sea.' : 'Try again! The sea is to the west.';
+            document.getElementById('direction').textContent = message;
+            document.getElementById('start').disabled = false; // Re-enable start button
+        }
+
         function determineWestDirection(alpha) {
+            // Assuming west is 270 degrees (with a margin from 260 to 280)
             const normalizedAlpha = alpha < 0 ? 360 + alpha : alpha;
             return normalizedAlpha >= 260 && normalizedAlpha <= 280;
         }
