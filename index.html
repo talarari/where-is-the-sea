@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find the Mediterranean</title>
+    <title>Where is the Sea</title>
     <style>
         body, html {
             height: 100%;
@@ -38,42 +38,51 @@
 </head>
 <body>
     <div id="app">
-        <h1>Point your phone towards the Mediterranean Sea</h1>
-        <p id="direction">Adjust your direction...</p>
+        <h1>Where is the Sea?</h1>
+        <p>Point your phone towards where you think the sea is.</p>
         <p id="timer">30</p>
         <button id="start">Start Challenge</button>
     </div>
     <script>
         document.getElementById('start').addEventListener('click', function() {
+            this.disabled = true; // Disable start button after challenge begins
             startOrientationListener();
         });
 
         function startOrientationListener() {
-            let timer = 30; // 30 seconds
+            let timer = 30; // 30 seconds countdown
             document.getElementById('timer').textContent = timer;
+            let finalAlpha = null; // To store the final orientation
+
             const interval = setInterval(() => {
                 if (timer > 0) {
                     timer--;
                     document.getElementById('timer').textContent = timer;
                 } else {
                     clearInterval(interval);
-                    alert('Time is up! Check if you won or lost.');
-                    // Here you could enhance the logic to check if the user was pointing west at the end
+                    checkIfCorrect(finalAlpha);
                 }
             }, 1000);
 
             if (window.DeviceOrientationEvent) {
                 window.addEventListener('deviceorientation', (event) => {
-                    const alpha = event.alpha;
-                    const westDirection = determineWestDirection(alpha);
-                    const directionMessage = westDirection ? 'On target! Hold steady.' : 'Adjust your direction. Point west.';
-                    document.getElementById('direction').textContent = directionMessage;
-                });
+                    finalAlpha = event.alpha; // Update finalAlpha with the current orientation
+                }, { once: true }); // Listen once to get an initial direction
             }
         }
 
+        function checkIfCorrect(alpha) {
+            const westDirection = determineWestDirection(alpha);
+            if (westDirection) {
+                alert('Congratulations! You found the sea.');
+            } else {
+                alert('Try again! Remember, the sea is to the west.');
+            }
+            document.getElementById('start').disabled = false; // Re-enable start button
+        }
+
         function determineWestDirection(alpha) {
-            // Assuming west direction is around 270 degrees (from 260 to 280 for some margin)
+            // Assuming west is 270 degrees (with a margin from 260 to 280)
             const normalizedAlpha = alpha < 0 ? 360 + alpha : alpha;
             return normalizedAlpha >= 260 && normalizedAlpha <= 280;
         }
