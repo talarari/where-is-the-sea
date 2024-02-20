@@ -72,7 +72,7 @@
 
         startButton.addEventListener('click', function() {
             this.disabled = true; // Disable start button after challenge begins
-            directionText.textContent = ''; // Clear direction text
+            directionText.textContent = ''; // Clear previous direction text
             startOrientationListener();
         });
 
@@ -87,8 +87,11 @@
                     timerDisplay.textContent = timer;
                 } else {
                     clearInterval(interval);
-                    window.removeEventListener('deviceorientation', orientationListener);
-                    checkIfCorrect(finalAlpha);
+                    directionText.textContent = 'Hold still, finalizing direction...';
+                    setTimeout(() => {
+                        window.removeEventListener('deviceorientation', orientationListener);
+                        checkIfCorrect(finalAlpha);
+                    }, 3000); // Wait 3 seconds to stabilize direction sensing
                 }
             }, 1000);
 
