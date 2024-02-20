@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find the Mediterranean</title>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            flex-direction: column;
+            font-family: Arial, sans-serif;
+        }
+
+        #app {
+            max-width: 90%;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        p {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>Point your phone towards the Mediterranean Sea</h1>
+        <p id="direction">Adjust your direction...</p>
+        <p id="timer">30</p>
+        <button id="start">Start Challenge</button>
+    </div>
+    <script>
+        document.getElementById('start').addEventListener('click', function() {
+            startOrientationListener();
+        });
+
+        function startOrientationListener() {
+            let timer = 30; // 30 seconds
+            document.getElementById('timer').textContent = timer;
+            const interval = setInterval(() => {
+                if (timer > 0) {
+                    timer--;
+                    document.getElementById('timer').textContent = timer;
+                } else {
+                    clearInterval(interval);
+                    alert('Time is up! Check if you won or lost.');
+                    // Here you could enhance the logic to check if the user was pointing west at the end
+                }
+            }, 1000);
+
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', (event) => {
+                    const alpha = event.alpha;
+                    const westDirection = determineWestDirection(alpha);
+                    const directionMessage = westDirection ? 'On target! Hold steady.' : 'Adjust your direction. Point west.';
+                    document.getElementById('direction').textContent = directionMessage;
+                });
+            }
+        }
+
+        function determineWestDirection(alpha) {
+            // Assuming west direction is around 270 degrees (from 260 to 280 for some margin)
+            const normalizedAlpha = alpha < 0 ? 360 + alpha : alpha;
+            return normalizedAlpha >= 260 && normalizedAlpha <= 280;
+        }
+    </script>
+</body>
+</html>
