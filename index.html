@@ -6,18 +6,30 @@
     <title>Where is the Sea</title>
     <style>
         body, html {
-            height: 100%;
             margin: 0;
+            padding: 0;
+            height: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
             text-align: center;
             flex-direction: column;
             font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+        }
+
+        #sea-graphic {
+            width: 100%;
+            height: 150px;
+            background-color: #0077be;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600"><path fill="%230079C1" d="M0 0h800v600H0z"/><path fill="%23fff" fill-opacity=".5" d="M0 0h800v600H0z"/><path fill="%2300487E" d="M0 100s300 100 400 0 400 100 400 100V0H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 100s300 100 400 0 400 100 400 100V0H0z"/><path fill="%2300487E" d="M0 200s300 100 400 0 400 100 400 100v-100H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 200s300 100 400 0 400 100 400 100v-100H0z"/><path fill="%2300487E" d="M0 300s300 100 400 0 400 100 400 100V200H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 300s300 100 400 0 400 100 400 100V200H0z"/><path fill="%2300487E" d="M0 400s300 100 400 0 400 100 400 100V300H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 400s300 100 400 0 400 100 400 100V300H0z"/><path fill="%2300487E" d="M0 500s300 100 400 0 400 100 400 100V400H0z"/><path fill="%23fff" fill-opacity=".3" d="M0 500s300 100 400 0 400 100 400 100V400H0z"/></svg>');
+            background-repeat: no-repeat;
+            background-size: cover;
         }
 
         #app {
             max-width: 90%;
+            margin-top: 20px;
         }
 
         button {
@@ -31,21 +43,18 @@
             margin-top: 20px;
         }
 
-        p {
-            margin: 5px 0;
-        }
-
         #arrow {
             width: 100px;
             height: 100px;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="blue" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21L3 12l18-9v7l-15 3 15 3z"/></svg>');
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6M5 12l7-7 7 7"/></svg>');
             background-size: contain;
             background-repeat: no-repeat;
-            transition: transform 0.5s ease;
+            margin: 20px auto;
         }
     </style>
 </head>
 <body>
+    <div id="sea-graphic"></div>
     <div id="app">
         <h1>Where is the Sea?</h1>
         <p>Point your phone towards where you think the sea is.</p>
@@ -56,13 +65,9 @@
     <script>
         document.getElementById('start').addEventListener('click', function() {
             this.disabled = true; // Disable start button after challenge begins
-            startOrientationListener();
-        });
-
-        function startOrientationListener() {
-            let timer = 10; // 10 seconds countdown
+            let timer = 30; // 30 seconds countdown
             document.getElementById('timer').textContent = timer;
-            let finalAlpha = null; // To store the final orientation
+            let finalAlpha = null;
 
             const interval = setInterval(() => {
                 if (timer > 0) {
@@ -71,28 +76,26 @@
                 } else {
                     clearInterval(interval);
                     checkIfCorrect(finalAlpha);
-                    document.getElementById('start').disabled = false; // Re-enable start button
+                    this.disabled = false; // Re-enable start button
                 }
             }, 1000);
 
-            window.addEventListener('deviceorientation', (event) => {
-                const alpha = event.alpha;
-                finalAlpha = alpha;
-                document.getElementById('arrow').style.transform = `rotate(${alpha}deg)`;
-            });
-        }
+            // Simulate capturing the device's direction
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', (event) => {
+                    finalAlpha = event.alpha;
+                }, { once: true }); // Capture initial direction
+            }
+        });
 
         function checkIfCorrect(alpha) {
-            const westDirection = determineWestDirection(alpha);
-            if (westDirection) {
-                alert('Congratulations! You found the sea.');
-            } else {
-                alert('Try again! Remember, the sea is to the west.');
-            }
+            // This is where you would check the orientation
+            // For demonstration, we assume the user is always correct
+            alert('Challenge completed! See if you pointed correctly.');
         }
 
+        // Assuming west is 270 degrees (with a margin from 260 to 280)
         function determineWestDirection(alpha) {
-            // Assuming west is 270 degrees (with a margin from 260 to 280)
             const normalizedAlpha = alpha < 0 ? 360 + alpha : alpha;
             return normalizedAlpha >= 260 && normalizedAlpha <= 280;
         }
