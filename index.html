@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Where is the Sea?</title>
     <style>
-        body,
-        html {
+        body, html {
             margin: 0;
             padding: 0;
             display: flex;
@@ -47,19 +45,16 @@
             border-left: 20px solid transparent;
             border-right: 20px solid transparent;
             border-bottom: 40px solid black;
-            margin: 20px auto;
-            /* Center the arrow */
+            margin: 20px auto; /* Center the arrow */
             display: block;
         }
 
-        #timer,
-        #direction {
+        #timer, #direction {
             font-size: 20px;
             margin: 10px 0;
         }
     </style>
 </head>
-
 <body>
     <div class="sea-graphic"></div>
     <div id="app">
@@ -75,7 +70,7 @@
         const directionText = document.getElementById('direction');
         const timerDisplay = document.getElementById('timer');
 
-        startButton.addEventListener('click', function () {
+        startButton.addEventListener('click', function() {
             this.disabled = true; // Disable start button after challenge begins
             directionText.textContent = ''; // Clear previous direction text
             startOrientationListener();
@@ -116,11 +111,9 @@
         function determineWestDirection(alpha) {
             // Normalize alpha to ensure it's between 0 and 360
             const normalizedAlpha = alpha >= 0 ? alpha % 360 : (360 + alpha % 360) % 360;
-            // Expanding the acceptable range for west to allow for more deviation
-            // Considering west from 225 to 315 degrees to be more tolerant
-            return normalizedAlpha >= 225 && normalizedAlpha <= 315;
+            // Check if the alpha is within the west direction range
+            return normalizedAlpha > 260 && normalizedAlpha < 280;
         }
     </script>
 </body>
-
 </html>
