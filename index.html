@@ -70,49 +70,60 @@
         const directionText = document.getElementById('direction');
         const timerDisplay = document.getElementById('timer');
 
+        function requestDeviceOrientationPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission().then(permissionState => {
+                    if (permissionState === 'granted') {
+                        watchCompass();
+                    } else {
+                        alert('Permission to access device orientation was denied.');
+                        startButton.disabled = false;
+                    }
+                }).catch(console.error);
+            } else {
+                watchCompass(); // Automatically proceed for non-iOS 13+ devices
+            }
+        }
+
         startButton.addEventListener('click', function() {
-            this.disabled = true; // Disable start button after challenge begins
-            directionText.textContent = ''; // Clear previous direction text
-            startOrientationListener();
+            this.disabled = true;
+            directionText.textContent = '';
+            requestDeviceOrientationPermission();
         });
 
-        function startOrientationListener() {
-            let timer = 10; // 10 seconds countdown
-            timerDisplay.textContent = timer;
-            let finalAlpha;
+        function watchCompass() {
+            let finalHeading = null;
+            const handleOrientationEvent = (event) => {
+                finalHeading = event.webkitCompassHeading || Math.abs(event.alpha - 360);
+            };
 
+            window.addEventListener('deviceorientation', handleOrientationEvent);
+
+            let timer = 10;
+            timerDisplay.textContent = timer;
             const interval = setInterval(() => {
                 if (timer > 0) {
                     timer--;
-                    timerDisplay.textContent = timer;
+                    timerDisplay.textContent = `Time remaining: ${timer}`;
                 } else {
                     clearInterval(interval);
-                    directionText.textContent = 'Hold still, finalizing direction...';
+                    window.removeEventListener('deviceorientation', handleOrientationEvent);
                     setTimeout(() => {
-                        window.removeEventListener('deviceorientation', orientationListener);
-                        checkIfCorrect(finalAlpha);
-                    }, 3000); // Wait 3 seconds to stabilize direction sensing
+                        directionText.textContent = 'Checking direction...';
+                        checkDirection(finalHeading);
+                    }, 3000); // Wait for stabilization
                 }
             }, 1000);
-
-            const orientationListener = (event) => {
-                finalAlpha = event.alpha;
-            };
-
-            window.addEventListener('deviceorientation', orientationListener);
         }
 
-        function checkIfCorrect(alpha) {
-            const westDirection = determineWestDirection(alpha);
-            directionText.textContent = westDirection ? 'Congratulations! You were pointing towards the sea.' : 'Try again! The sea is to the west.';
-            startButton.disabled = false; // Re-enable start button for a new challenge
-        }
-
-        function determineWestDirection(alpha) {
-            // Normalize alpha to ensure it's between 0 and 360
-            const normalizedAlpha = alpha >= 0 ? alpha % 360 : (360 + alpha % 360) % 360;
-            // Check if the alpha is within the west direction range
-            return normalizedAlpha > 260 && normalizedAlpha < 280;
+        function checkDirection(heading) {
+            // West is considered within 225 to 315 degrees
+            if (heading >= 225 && heading <= 315) {
+                directionText.textContent = 'Congratulations! You were pointing towards the sea.';
+            } else {
+                directionText.textContent = 'Try again! The sea is to the west.';
+            }
+            startButton.disabled = false;
         }
     </script>
 </body>
