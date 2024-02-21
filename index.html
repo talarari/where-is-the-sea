@@ -71,53 +71,65 @@
         const directionText = document.getElementById('direction');
         const degreesText = document.getElementById('degrees');
         const timerDisplay = document.getElementById('timer');
+        let compassInitialized = false;
 
-        function requestDeviceOrientationPermission() {
+        async function requestDeviceOrientationPermission() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission().then(permissionState => {
+                try {
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
                     if (permissionState === 'granted') {
-                        enableCompass();
+                        compassInitialized = true;
                     } else {
                         alert('Permission to access device orientation was denied.');
-                        startButton.disabled = false;
                     }
-                }).catch(console.error);
+                } catch (error) {
+                    console.error(`Failed to request permission: ${error}`);
+                }
             } else {
-                enableCompass(); // Proceed for non-iOS 13+ devices
+                compassInitialized = true; // Permissions not needed or not an iOS device
             }
         }
 
         function enableCompass() {
+            if (!compassInitialized) {
+                alert("Compass not initialized. Please reload and allow permission.");
+                return;
+            }
+            
             window.addEventListener('deviceorientation', (event) => {
-                const heading = event.webkitCompassHeading || Math.abs(event.alpha - 360);
+                let heading = event.alpha;
+                if (typeof event.webkitCompassHeading !== 'undefined') {
+                    heading = event.webkitCompassHeading; // iOS
+                } else if (heading) {
+                    heading = (360 - heading); // Normalize for Android
+                }
                 degreesText.textContent = `Degrees: ${Math.round(heading)}`;
-            });
+            }, { once: true });
         }
 
-        startButton.addEventListener('click', function() {
-            this.disabled = true; // Disable start button
-            directionText.textContent = ''; // Clear previous direction text
-            startChallenge();
-        });
-
         function startChallenge() {
+            enableCompass(); // Begin listening to device orientation
+            
             let timer = 10; // Challenge duration
             timerDisplay.textContent = timer; // Initialize timer display
+            directionText.textContent = ''; // Clear previous direction text
 
             const countdown = setInterval(() => {
                 timer--;
                 timerDisplay.textContent = timer;
                 if (timer <= 0) {
                     clearInterval(countdown);
-                    // Challenge completed
                     directionText.textContent = 'Challenge completed!';
                     startButton.disabled = false; // Re-enable start button
                 }
             }, 1000);
         }
 
-        // Call this function when the start button is clicked
-        requestDeviceOrientationPermission();
+        startButton.addEventListener('click', async () => {
+            startButton.disabled = true; // Disable start button
+            await requestDeviceOrientationPermission();
+            startChallenge();
+        });
     </script>
 </body>
 </html>
