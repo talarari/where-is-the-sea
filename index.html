@@ -1,117 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Where is the Sea?</title>
+    <title>Compass App</title>
     <style>
         body, html {
-            margin: 0;
-            padding: 0;
+            height: 100%;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
-            font-family: Arial, sans-serif;
-            height: 100vh;
-            background-color: #f0f8ff;
-        }
-
-        .sea-graphic {
-            width: 100%;
-            height: 150px;
-            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="100%" height="100%" fill="%230077be"/><text x="50%" y="50%" font-family="Arial" font-size="24" fill="white" text-anchor="middle" alignment-baseline="central">The Sea</text></svg>') no-repeat center center;
-            background-size: cover;
-            margin-bottom: 20px;
-        }
-
-        #app {
+            align-items: center;
             text-align: center;
+            font-family: Arial, sans-serif;
         }
-
-        button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-
-        #timer, #direction, #degrees {
-            font-size: 20px;
-            margin: 10px 0;
+        #heading {
+            font-size: 48px;
         }
     </style>
 </head>
 <body>
-    <div class="sea-graphic"></div>
-    <div id="app">
-        <h1>Where is the Sea?</h1>
-        <p>Point your phone towards where you think the sea is, then press 'Start Challenge'.</p>
-        <p id="degrees">Degrees: --</p>
-        <p id="timer">10</p>
-        <button id="start">Start Challenge</button>
-        <p id="direction"></p>
-    </div>
-    <script>
-        const startButton = document.getElementById('start');
-        const directionText = document.getElementById('direction');
-        const degreesText = document.getElementById('degrees');
-        const timerDisplay = document.getElementById('timer');
 
-        async function requestDeviceOrientationPermission() {
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permissionState = await DeviceOrientationEvent.requestPermission();
-                    if (permissionState === 'granted') {
-                        window.addEventListener('deviceorientation', handleOrientationEvent, true);
-                    } else {
-                        alert('Permission to access device orientation was denied.');
-                    }
-                } catch (error) {
-                    console.error(`Failed to request permission: ${error}`);
-                }
-            } else {
-                // For non-iOS 13+ devices, permission is not needed.
-                window.addEventListener('deviceorientation', handleOrientationEvent, true);
-            }
+<div id="compass">
+    <div id="heading">0°</div>
+</div>
+
+<script>
+    // Check if DeviceOrientationEvent is supported
+    if ('DeviceOrientationEvent' in window) {
+        window.addEventListener('deviceorientation', deviceOrientationHandler, false);
+    } else {
+        document.getElementById('compass').innerHTML = 'Your device does not support orientation sensors.';
+    }
+
+    function deviceOrientationHandler(event) {
+        var alpha = event.alpha; // Get the current heading in degrees
+
+        // Adjust the direction based on the alpha value
+        if (typeof alpha === 'number') {
+            var heading = Math.round(alpha);
+            document.getElementById('heading').innerHTML = `${heading}°`;
         }
+    }
+</script>
 
-        function handleOrientationEvent(event) {
-            let heading = event.alpha;
-            if (event.webkitCompassHeading) {
-                heading = event.webkitCompassHeading; // iOS
-            } else {
-                // Android and others might not need adjustment, directly use alpha
-                heading = event.alpha;
-            }
-            degreesText.textContent = `Degrees: ${Math.round(heading)}`;
-        }
-
-        function startChallenge() {
-            startButton.disabled = true; // Disable start button
-            directionText.textContent = ''; // Clear previous direction text
-            let timer = 10; // Challenge duration
-            timerDisplay.textContent = timer; // Initialize timer display
-
-            const countdown = setInterval(() => {
-                timer--;
-                timerDisplay.textContent = timer;
-                if (timer <= 0) {
-                    clearInterval(countdown);
-                    window.removeEventListener('deviceorientation', handleOrientationEvent, true); // Stop listening to avoid unnecessary battery drain
-                    directionText.textContent = 'Challenge completed!';
-                    startButton.disabled = false; // Re-enable start button
-                }
-            }, 1000);
-        }
-
-        startButton.addEventListener('click', async () => {
-            await requestDeviceOrientationPermission();
-            startChallenge();
-        });
-    </script>
 </body>
 </html>
