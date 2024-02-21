@@ -39,16 +39,6 @@
             border-radius: 5px;
         }
 
-        #arrow {
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-bottom: 40px solid black;
-            margin: 20px auto; /* Center the arrow */
-            display: block;
-        }
-
         #timer, #direction, #degrees {
             font-size: 20px;
             margin: 10px 0;
@@ -60,7 +50,6 @@
     <div id="app">
         <h1>Where is the Sea?</h1>
         <p>Point your phone towards where you think the sea is, then press 'Start Challenge'.</p>
-        <div id="arrow"></div>
         <p id="degrees">Degrees: --</p>
         <p id="timer">10</p>
         <button id="start">Start Challenge</button>
@@ -71,14 +60,13 @@
         const directionText = document.getElementById('direction');
         const degreesText = document.getElementById('degrees');
         const timerDisplay = document.getElementById('timer');
-        let compassInitialized = false;
 
         async function requestDeviceOrientationPermission() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 try {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
                     if (permissionState === 'granted') {
-                        compassInitialized = true;
+                        window.addEventListener('deviceorientation', handleOrientationEvent, true);
                     } else {
                         alert('Permission to access device orientation was denied.');
                     }
@@ -86,39 +74,34 @@
                     console.error(`Failed to request permission: ${error}`);
                 }
             } else {
-                compassInitialized = true; // Permissions not needed or not an iOS device
+                // For non-iOS 13+ devices, permission is not needed.
+                window.addEventListener('deviceorientation', handleOrientationEvent, true);
             }
         }
 
-        function enableCompass() {
-            if (!compassInitialized) {
-                alert("Compass not initialized. Please reload and allow permission.");
-                return;
+        function handleOrientationEvent(event) {
+            let heading = event.alpha;
+            if (event.webkitCompassHeading) {
+                heading = event.webkitCompassHeading; // iOS
+            } else {
+                // Android and others might not need adjustment, directly use alpha
+                heading = event.alpha;
             }
-            
-            window.addEventListener('deviceorientation', (event) => {
-                let heading = event.alpha;
-                if (typeof event.webkitCompassHeading !== 'undefined') {
-                    heading = event.webkitCompassHeading; // iOS
-                } else if (heading) {
-                    heading = (360 - heading); // Normalize for Android
-                }
-                degreesText.textContent = `Degrees: ${Math.round(heading)}`;
-            }, { once: true });
+            degreesText.textContent = `Degrees: ${Math.round(heading)}`;
         }
 
         function startChallenge() {
-            enableCompass(); // Begin listening to device orientation
-            
+            startButton.disabled = true; // Disable start button
+            directionText.textContent = ''; // Clear previous direction text
             let timer = 10; // Challenge duration
             timerDisplay.textContent = timer; // Initialize timer display
-            directionText.textContent = ''; // Clear previous direction text
 
             const countdown = setInterval(() => {
                 timer--;
                 timerDisplay.textContent = timer;
                 if (timer <= 0) {
                     clearInterval(countdown);
+                    window.removeEventListener('deviceorientation', handleOrientationEvent, true); // Stop listening to avoid unnecessary battery drain
                     directionText.textContent = 'Challenge completed!';
                     startButton.disabled = false; // Re-enable start button
                 }
@@ -126,7 +109,6 @@
         }
 
         startButton.addEventListener('click', async () => {
-            startButton.disabled = true; // Disable start button
             await requestDeviceOrientationPermission();
             startChallenge();
         });
