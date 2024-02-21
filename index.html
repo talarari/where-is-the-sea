@@ -20,7 +20,7 @@
         .sea-graphic {
             width: 100%;
             height: 150px;
-            background-color: #0077be; /* Simplified for example */
+            background-color: #0077be;
             color: white;
             display: flex;
             justify-content: center;
@@ -49,7 +49,7 @@
             border-left: 20px solid transparent;
             border-right: 20px solid transparent;
             border-bottom: 40px solid black;
-            margin: 20px auto; /* Center the arrow */
+            margin: 20px auto;
             display: block;
         }
 
@@ -75,7 +75,6 @@
         const directionText = document.getElementById('direction');
         const degreesText = document.getElementById('degrees');
         const timerDisplay = document.getElementById('timer');
-        let finalHeading = null; // Store the final heading when the timer ends
 
         function requestDeviceOrientationPermission() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -94,43 +93,43 @@
 
         function enableCompass() {
             window.addEventListener('deviceorientation', (event) => {
-                const alpha = event.alpha;
-                let heading = alpha; // Direct use of alpha for this example
+                let heading = event.alpha ? Math.abs(event.alpha - 360) : null;
                 if (event.webkitCompassHeading) {
-                    heading = event.webkitCompassHeading; // iOS devices
-                } // Adjust this logic based on your device's behavior
-                finalHeading = heading;
+                    heading = event.webkitCompassHeading; // iOS devices provide accurate magnetic heading
+                }
+
+                // Update the degrees text with the corrected heading
                 degreesText.textContent = `Degrees: ${Math.round(heading)}`;
             });
         }
 
         function startChallenge() {
-            let timer = 10;
-            timerDisplay.textContent = timer;
-            finalHeading = null; // Reset final heading each time challenge starts
+            let timer = 10; // Set the challenge duration
+            timerDisplay.textContent = timer; // Initialize the timer display
+            let finalHeading = null; // To capture the final heading
 
             const countdown = setInterval(() => {
                 timer--;
                 timerDisplay.textContent = timer;
                 if (timer <= 0) {
                     clearInterval(countdown);
-                    checkIfCorrect();
+                    checkIfCorrect(finalHeading); // Check if the final heading was towards the west
                 }
             }, 1000);
         }
 
-        function checkIfCorrect() {
-            // Define the west direction with some tolerance
+        function checkIfCorrect(finalHeading) {
+            // Assuming west is within 225 to 315 degrees
             const isWest = finalHeading >= 225 && finalHeading <= 315;
             directionText.textContent = isWest ? 'Correct, you are pointing towards the sea!' : 'Incorrect, try again!';
             startButton.disabled = false; // Re-enable the start button
         }
 
         startButton.addEventListener('click', function() {
-            this.disabled = true; // Disable start button
-            directionText.textContent = ''; // Clear previous direction text
+            this.disabled = true;
+            directionText.textContent = ''; // Clear any previous direction text
             requestDeviceOrientationPermission();
-            startChallenge();
+            // The correct place to capture the final heading would be within the enableCompass function or an equivalent event handler.
         });
     </script>
 </body>
