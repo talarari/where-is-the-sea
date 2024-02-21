@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Compass Direction</title>
+    <title>Where is the Sea?</title>
     <style>
         body, html {
             margin: 0;
@@ -16,57 +16,107 @@
             height: 100vh;
             background-color: #f0f8ff;
         }
-        .container {
+
+        .sea-graphic {
+            width: 100%;
+            height: 150px;
+            background-color: #0077be;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        #app {
             text-align: center;
         }
-        .heading {
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        #timer, #heading {
             font-size: 20px;
             margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Compass Heading</h1>
-        <p id="heading">--</p>
-        <p>Point your device towards different directions to see the heading change.</p>
+    <div class="sea-graphic">The Sea</div>
+    <div id="app">
+        <h1>Where is the Sea?</h1>
+        <p>Point your phone towards where you think the sea is, then press 'Start Challenge'.</p>
+        <p id="heading">Heading: --</p>
+        <p id="timer">10</p>
+        <button id="start">Start Challenge</button>
+        <p id="direction"></p>
     </div>
     <script>
+        const startButton = document.getElementById('start');
+        const directionText = document.getElementById('direction');
         const headingElement = document.getElementById('heading');
+        const timerDisplay = document.getElementById('timer');
 
-        // Function to request permission on iOS 13+ devices
-        async function requestPermission() {
+        let finalHeading = null;
+
+        async function requestPermissionAndStartChallenge() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 try {
                     const permissionState = await DeviceOrientationEvent.requestPermission();
                     if (permissionState === 'granted') {
-                        listenToDeviceOrientation();
+                        startChallenge();
                     } else {
-                        headingElement.textContent = 'Permission denied';
+                        directionText.textContent = 'Permission denied';
                     }
                 } catch (error) {
-                    console.error(`Failed to request device orientation permission: ${error}`);
+                    console.error(`Failed to request permission: ${error}`);
                 }
             } else {
-                // Permissions not needed or not iOS device, just start listening
-                listenToDeviceOrientation();
+                // For non-iOS 13+ devices, permission is not needed.
+                startChallenge();
             }
         }
 
-        function listenToDeviceOrientation() {
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientation', (event) => {
-                    const alpha = event.alpha;
-                    const heading = alpha != null ? Math.round(alpha) : 'Unavailable';
-                    headingElement.textContent = `Heading: ${heading}°`;
-                });
-            } else {
-                headingElement.textContent = 'Device orientation not supported';
-            }
+        function startChallenge() {
+            let timer = 10; // Challenge duration in seconds
+            timerDisplay.textContent = timer;
+            directionText.textContent = ''; // Clear direction text
+
+            window.addEventListener('deviceorientation', (event) => {
+                const alpha = event.alpha;
+                finalHeading = Math.round(alpha);
+                headingElement.textContent = `Heading: ${finalHeading}°`;
+            }, { once: true });
+
+            const countdown = setInterval(() => {
+                timer--;
+                timerDisplay.textContent = timer;
+                if (timer === 0) {
+                    clearInterval(countdown);
+                    checkDirection();
+                }
+            }, 1000);
         }
 
-        // Initial setup to request permission if needed
-        document.addEventListener('DOMContentLoaded', requestPermission);
+        function checkDirection() {
+            // Assuming the sea is towards the geographic West (270°) with a tolerance of ±45°.
+            const isCorrectDirection = finalHeading >= 225 && finalHeading <= 315;
+            directionText.textContent = isCorrectDirection ? 'Correct, you are pointing towards the sea!' : 'Incorrect, try again!';
+            startButton.disabled = false;
+        }
+
+        startButton.addEventListener('click', () => {
+            startButton.disabled = true; // Disable button to prevent multiple clicks
+            requestPermissionAndStartChallenge();
+        });
     </script>
 </body>
 </html>
