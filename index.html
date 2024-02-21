@@ -62,7 +62,7 @@
         <p>Point your phone towards where you think the sea is, then press 'Start Challenge'.</p>
         <div id="arrow"></div>
         <p id="degrees">Degrees: --</p>
-        <p id="timer"></p>
+        <p id="timer">10</p>
         <button id="start">Start Challenge</button>
         <p id="direction"></p>
     </div>
@@ -76,31 +76,48 @@
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission().then(permissionState => {
                     if (permissionState === 'granted') {
-                        watchCompass();
+                        enableCompass();
                     } else {
                         alert('Permission to access device orientation was denied.');
                         startButton.disabled = false;
                     }
                 }).catch(console.error);
             } else {
-                watchCompass(); // Automatically proceed for non-iOS 13+ devices
+                enableCompass(); // Proceed for non-iOS 13+ devices
             }
         }
 
-        startButton.addEventListener('click', function() {
-            this.disabled = true;
-            directionText.textContent = '';
-            requestDeviceOrientationPermission();
-        });
-
-        function watchCompass() {
-            const handleOrientationEvent = (event) => {
+        function enableCompass() {
+            window.addEventListener('deviceorientation', (event) => {
                 const heading = event.webkitCompassHeading || Math.abs(event.alpha - 360);
                 degreesText.textContent = `Degrees: ${Math.round(heading)}`;
-            };
-
-            window.addEventListener('deviceorientation', handleOrientationEvent);
+            });
         }
+
+        startButton.addEventListener('click', function() {
+            this.disabled = true; // Disable start button
+            directionText.textContent = ''; // Clear previous direction text
+            startChallenge();
+        });
+
+        function startChallenge() {
+            let timer = 10; // Challenge duration
+            timerDisplay.textContent = timer; // Initialize timer display
+
+            const countdown = setInterval(() => {
+                timer--;
+                timerDisplay.textContent = timer;
+                if (timer <= 0) {
+                    clearInterval(countdown);
+                    // Challenge completed
+                    directionText.textContent = 'Challenge completed!';
+                    startButton.disabled = false; // Re-enable start button
+                }
+            }, 1000);
+        }
+
+        // Call this function when the start button is clicked
+        requestDeviceOrientationPermission();
     </script>
 </body>
 </html>
