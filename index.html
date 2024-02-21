@@ -87,18 +87,27 @@
             }
         }
 
+        startButton.addEventListener('click', function() {
+            this.disabled = true;
+            directionText.textContent = '';
+            requestDeviceOrientationPermission();
+            startChallenge();
+        });
+
         function enableCompass() {
             window.addEventListener('deviceorientation', (event) => {
-                const heading = event.webkitCompassHeading || Math.abs(event.alpha - 360);
+                let heading;
+                if (event.webkitCompassHeading) {
+                    heading = event.webkitCompassHeading;
+                } else if (event.alpha !== null) {
+                    heading = (360 - event.alpha) % 360;
+                } else {
+                    heading = 'N/A';
+                    return;
+                }
                 degreesText.textContent = `Degrees: ${Math.round(heading)}`;
             });
         }
-
-        startButton.addEventListener('click', function() {
-            this.disabled = true; // Disable start button
-            directionText.textContent = ''; // Clear previous direction text
-            startChallenge();
-        });
 
         function startChallenge() {
             let timer = 10; // Challenge duration
@@ -115,9 +124,6 @@
                 }
             }, 1000);
         }
-
-        // Call this function when the start button is clicked
-        requestDeviceOrientationPermission();
     </script>
 </body>
 </html>
