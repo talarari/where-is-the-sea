@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Where is the Sea?</title>
+    <title>Compass Direction</title>
     <style>
         body, html {
             margin: 0;
@@ -16,121 +16,57 @@
             height: 100vh;
             background-color: #f0f8ff;
         }
-
-        .sea-graphic {
-            width: 100%;
-            height: 150px;
-            background-color: #0077be;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
-        #app {
+        .container {
             text-align: center;
         }
-
-        button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            cursor: pointer;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-
-        #arrow {
-            width: 0;
-            height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-bottom: 40px solid black;
-            margin: 20px auto;
-            display: block;
-        }
-
-        #timer, #direction, #degrees {
+        .heading {
             font-size: 20px;
             margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <div class="sea-graphic">The Sea</div>
-    <div id="app">
-        <h1>Where is the Sea?</h1>
-        <p>Point your phone towards where you think the sea is, then press 'Start Challenge'.</p>
-        <div id="arrow"></div>
-        <p id="degrees">Degrees: --</p>
-        <p id="timer">10</p>
-        <button id="start">Start Challenge</button>
-        <p id="direction"></p>
+    <div class="container">
+        <h1>Compass Heading</h1>
+        <p id="heading">--</p>
+        <p>Point your device towards different directions to see the heading change.</p>
     </div>
     <script>
-        const startButton = document.getElementById('start');
-        const directionText = document.getElementById('direction');
-        const degreesText = document.getElementById('degrees');
-        const timerDisplay = document.getElementById('timer');
+        const headingElement = document.getElementById('heading');
 
-        function requestDeviceOrientationPermission() {
+        // Function to request permission on iOS 13+ devices
+        async function requestPermission() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission().then(permissionState => {
+                try {
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
                     if (permissionState === 'granted') {
-                        enableCompass();
+                        listenToDeviceOrientation();
                     } else {
-                        alert('Permission to access device orientation was denied.');
-                        startButton.disabled = false;
+                        headingElement.textContent = 'Permission denied';
                     }
-                }).catch(console.error);
+                } catch (error) {
+                    console.error(`Failed to request device orientation permission: ${error}`);
+                }
             } else {
-                enableCompass(); // Proceed for non-iOS 13+ devices
+                // Permissions not needed or not iOS device, just start listening
+                listenToDeviceOrientation();
             }
         }
 
-        function enableCompass() {
-            window.addEventListener('deviceorientation', (event) => {
-                let heading = event.alpha ? Math.abs(event.alpha - 360) : null;
-                if (event.webkitCompassHeading) {
-                    heading = event.webkitCompassHeading; // iOS devices provide accurate magnetic heading
-                }
-
-                // Update the degrees text with the corrected heading
-                degreesText.textContent = `Degrees: ${Math.round(heading)}`;
-            });
+        function listenToDeviceOrientation() {
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', (event) => {
+                    const alpha = event.alpha;
+                    const heading = alpha != null ? Math.round(alpha) : 'Unavailable';
+                    headingElement.textContent = `Heading: ${heading}°`;
+                });
+            } else {
+                headingElement.textContent = 'Device orientation not supported';
+            }
         }
 
-        function startChallenge() {
-            let timer = 10; // Set the challenge duration
-            timerDisplay.textContent = timer; // Initialize the timer display
-            let finalHeading = null; // To capture the final heading
-
-            const countdown = setInterval(() => {
-                timer--;
-                timerDisplay.textContent = timer;
-                if (timer <= 0) {
-                    clearInterval(countdown);
-                    checkIfCorrect(finalHeading); // Check if the final heading was towards the west
-                }
-            }, 1000);
-        }
-
-        function checkIfCorrect(finalHeading) {
-            // Assuming west is within 225 to 315 degrees
-            const isWest = finalHeading >= 225 && finalHeading <= 315;
-            directionText.textContent = isWest ? 'Correct, you are pointing towards the sea!' : 'Incorrect, try again!';
-            startButton.disabled = false; // Re-enable the start button
-        }
-
-        startButton.addEventListener('click', function() {
-            this.disabled = true;
-            directionText.textContent = ''; // Clear any previous direction text
-            requestDeviceOrientationPermission();
-            // The correct place to capture the final heading would be within the enableCompass function or an equivalent event handler.
-        });
+        // Initial setup to request permission if needed
+        document.addEventListener('DOMContentLoaded', requestPermission);
     </script>
 </body>
 </html>
