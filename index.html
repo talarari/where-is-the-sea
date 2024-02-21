@@ -49,7 +49,7 @@
             display: block;
         }
 
-        #timer, #direction {
+        #timer, #direction, #degrees {
             font-size: 20px;
             margin: 10px 0;
         }
@@ -61,6 +61,7 @@
         <h1>Where is the Sea?</h1>
         <p>Point your phone towards where you think the sea is, then press 'Start Challenge'.</p>
         <div id="arrow"></div>
+        <p id="degrees">Degrees: --</p>
         <p id="timer"></p>
         <button id="start">Start Challenge</button>
         <p id="direction"></p>
@@ -68,6 +69,7 @@
     <script>
         const startButton = document.getElementById('start');
         const directionText = document.getElementById('direction');
+        const degreesText = document.getElementById('degrees');
         const timerDisplay = document.getElementById('timer');
 
         function requestDeviceOrientationPermission() {
@@ -92,38 +94,12 @@
         });
 
         function watchCompass() {
-            let finalHeading = null;
             const handleOrientationEvent = (event) => {
-                finalHeading = event.webkitCompassHeading || Math.abs(event.alpha - 360);
+                const heading = event.webkitCompassHeading || Math.abs(event.alpha - 360);
+                degreesText.textContent = `Degrees: ${Math.round(heading)}`;
             };
 
             window.addEventListener('deviceorientation', handleOrientationEvent);
-
-            let timer = 10;
-            timerDisplay.textContent = timer;
-            const interval = setInterval(() => {
-                if (timer > 0) {
-                    timer--;
-                    timerDisplay.textContent = `Time remaining: ${timer}`;
-                } else {
-                    clearInterval(interval);
-                    window.removeEventListener('deviceorientation', handleOrientationEvent);
-                    setTimeout(() => {
-                        directionText.textContent = 'Checking direction...';
-                        checkDirection(finalHeading);
-                    }, 3000); // Wait for stabilization
-                }
-            }, 1000);
-        }
-
-        function checkDirection(heading) {
-            // West is considered within 225 to 315 degrees
-            if (heading >= 225 && heading <= 315) {
-                directionText.textContent = 'Congratulations! You were pointing towards the sea.';
-            } else {
-                directionText.textContent = 'Try again! The sea is to the west.';
-            }
-            startButton.disabled = false;
         }
     </script>
 </body>
