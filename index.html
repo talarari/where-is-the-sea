@@ -20,12 +20,8 @@
         .sea-graphic {
             width: 100%;
             height: 150px;
-            background-color: #0077be;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="100%" height="100%" fill="%230077be"/><text x="50%" y="50%" font-family="Arial" font-size="24" fill="white" text-anchor="middle" alignment-baseline="central">The Sea</text></svg>') no-repeat center center;
+            background-size: cover;
             margin-bottom: 20px;
         }
 
@@ -43,18 +39,29 @@
             border-radius: 5px;
         }
 
-        #timer, #heading {
+        #arrow {
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 40px solid black;
+            margin: 20px auto; /* Center the arrow */
+            display: block;
+        }
+
+        #timer, #direction, #degrees {
             font-size: 20px;
             margin: 10px 0;
         }
     </style>
 </head>
 <body>
-    <div class="sea-graphic">The Sea</div>
+    <div class="sea-graphic"></div>
     <div id="app">
         <h1>Where is the Sea?</h1>
         <p>Point your phone towards where you think the sea is, then press 'Start Challenge'.</p>
-        <p id="heading">Heading: --</p>
+        <div id="arrow"></div>
+        <p id="degrees">Degrees: --</p>
         <p id="timer">10</p>
         <button id="start">Start Challenge</button>
         <p id="direction"></p>
@@ -62,61 +69,55 @@
     <script>
         const startButton = document.getElementById('start');
         const directionText = document.getElementById('direction');
-        const headingElement = document.getElementById('heading');
+        const degreesText = document.getElementById('degrees');
         const timerDisplay = document.getElementById('timer');
 
-        let finalHeading = null;
-
-        async function requestPermissionAndStartChallenge() {
+        function requestDeviceOrientationPermission() {
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permissionState = await DeviceOrientationEvent.requestPermission();
+                DeviceOrientationEvent.requestPermission().then(permissionState => {
                     if (permissionState === 'granted') {
-                        startChallenge();
+                        enableCompass();
                     } else {
-                        directionText.textContent = 'Permission denied';
+                        alert('Permission to access device orientation was denied.');
+                        startButton.disabled = false;
                     }
-                } catch (error) {
-                    console.error(`Failed to request permission: ${error}`);
-                }
+                }).catch(console.error);
             } else {
-                // For non-iOS 13+ devices, permission is not needed.
-                startChallenge();
+                enableCompass(); // Proceed for non-iOS 13+ devices
             }
         }
 
-        function startChallenge() {
-            let timer = 10; // Challenge duration in seconds
-            timerDisplay.textContent = timer;
-            directionText.textContent = ''; // Clear direction text
-
+        function enableCompass() {
             window.addEventListener('deviceorientation', (event) => {
-                const alpha = event.alpha;
-                finalHeading = Math.round(alpha);
-                headingElement.textContent = `Heading: ${finalHeading}°`;
-            }, { once: true });
+                const heading = event.webkitCompassHeading || Math.abs(event.alpha - 360);
+                degreesText.textContent = `Degrees: ${Math.round(heading)}`;
+            });
+        }
+
+        startButton.addEventListener('click', function() {
+            this.disabled = true; // Disable start button
+            directionText.textContent = ''; // Clear previous direction text
+            startChallenge();
+        });
+
+        function startChallenge() {
+            let timer = 10; // Challenge duration
+            timerDisplay.textContent = timer; // Initialize timer display
 
             const countdown = setInterval(() => {
                 timer--;
                 timerDisplay.textContent = timer;
-                if (timer === 0) {
+                if (timer <= 0) {
                     clearInterval(countdown);
-                    checkDirection();
+                    // Challenge completed
+                    directionText.textContent = 'Challenge completed!';
+                    startButton.disabled = false; // Re-enable start button
                 }
             }, 1000);
         }
 
-        function checkDirection() {
-            // Assuming the sea is towards the geographic West (270°) with a tolerance of ±45°.
-            const isCorrectDirection = finalHeading >= 225 && finalHeading <= 315;
-            directionText.textContent = isCorrectDirection ? 'Correct, you are pointing towards the sea!' : 'Incorrect, try again!';
-            startButton.disabled = false;
-        }
-
-        startButton.addEventListener('click', () => {
-            startButton.disabled = true; // Disable button to prevent multiple clicks
-            requestPermissionAndStartChallenge();
-        });
+        // Call this function when the start button is clicked
+        requestDeviceOrientationPermission();
     </script>
 </body>
 </html>
